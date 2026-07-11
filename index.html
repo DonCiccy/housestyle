@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Housestyle — Define your editorial standard. Every draft checked against it.</title>
+<meta name="description" content="A content quality linter: paste or import an article and Housestyle checks structure, readability, formatting, SEO and accessibility against a fixed standard, flags every problem by severity, and exports it ready for WordPress. No AI, no install, no account.">
+
+<meta property="og:title" content="Housestyle">
+<meta property="og:description" content="A content linter for the web — paste a draft, get a prioritized list of problems, fix what's fixable, export it ready to publish.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://donciccy.github.io/housestyle">
+<meta property="og:image" content="https://donciccy.github.io/housestyle/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Housestyle — a content linter for the web">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Housestyle">
+<meta name="twitter:description" content="A content linter for the web — paste a draft, get a prioritized list of problems, fix what's fixable, export it ready to publish.">
+<meta name="twitter:image" content="https://donciccy.github.io/housestyle/assets/og-image.png">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="180x180" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/turndown@7/dist/turndown.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+<div class="hero-band">
+  <div class="hero-inner">
+    <h1>Housestyle<span class="version-tag">v2.0</span></h1>
+    <p class="tagline">Paste or import a draft. Get back a prioritized list of problems — critical, warning, suggestion — fix what's fixable, export it ready for WordPress.</p>
+    <p class="subtagline">A content linter, not a writer. It doesn't touch your voice — it checks structure, readability and formatting against a standard you set, then hands back exactly what needs fixing.</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="editor" type="button">Editor</button>
+    <button class="tab-btn" data-tab="analysis" type="button">Problems <span class="mini-badge" id="scoreMiniBadge"></span></button>
+    <button class="tab-btn" data-tab="export" type="button">Export</button>
+    <button class="tab-btn" data-tab="settings" type="button">Settings</button>
+  </div>
+
+  <!-- EDITOR TAB -->
+  <div class="tab-panel" id="tab-editor">
+    <div class="draft-banner" id="draftBanner" style="display:none;">
+      <span id="draftBannerText"></span>
+      <div class="draft-banner-actions">
+        <button class="btn-secondary small" id="btnRestoreDraft" type="button">Restore</button>
+        <button class="btn-secondary small" id="btnDismissDraft" type="button">Dismiss</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <button class="btn-secondary" id="btnSample" type="button">Load sample</button>
+        <button class="btn-secondary" id="btnImportDocx" type="button">Import .docx</button>
+        <input type="file" id="docxFileInput" accept=".docx" style="display:none;">
+        <button class="btn-secondary" id="btnClear" type="button">Clear</button>
+        <button class="btn-primary" id="btnAutoFix" type="button">Auto-Fix</button>
+        <span class="paste-feedback" id="pasteFeedback"></span>
+        <span class="wordcount-badge" id="wordCountBadge">0 words</span>
+      </div>
+      <div class="autofix-summary" id="autofixSummary" style="display:none;"></div>
+      <div class="editor-grid">
+        <div>
+          <div class="pane-label-row"><span class="pane-label">Markdown / plain text</span></div>
+          <div class="format-toolbar" id="formatToolbar">
+            <button type="button" class="format-btn" data-action="bold" title="Bold — Ctrl/Cmd+B"><strong>B</strong></button>
+            <button type="button" class="format-btn" data-action="italic" title="Italic — Ctrl/Cmd+I"><em>I</em></button>
+            <span class="format-divider"></span>
+            <button type="button" class="format-btn" data-action="h1" title="Heading 1 (article title)">H1</button>
+            <button type="button" class="format-btn" data-action="h2" title="Heading 2">H2</button>
+            <button type="button" class="format-btn" data-action="h3" title="Heading 3">H3</button>
+            <span class="format-divider"></span>
+            <button type="button" class="format-btn" data-action="ul" title="Bulleted list">• List</button>
+            <button type="button" class="format-btn" data-action="ol" title="Numbered list">1. List</button>
+            <button type="button" class="format-btn" data-action="quote" title="Quote">" Quote</button>
+            <span class="format-divider"></span>
+            <button type="button" class="format-btn" data-action="link" title="Link">🔗 Link</button>
+            <button type="button" class="format-btn" data-action="image" title="Image">🖼 Image</button>
+            <button type="button" class="format-btn" data-action="hr" title="Horizontal rule">— Rule</button>
+          </div>
+          <div class="field-hint" style="margin-bottom:0.4rem;">Select text first to format it, or click with nothing selected to insert a starter you can type over.</div>
+          <textarea id="markdownInput" placeholder="Paste your article here — Markdown, plain text, or rich text copied from Google Docs, Word or Notion…"></textarea>
+        </div>
+        <div>
+          <div class="pane-label-row">
+            <span class="pane-label">Live preview</span>
+            <button class="btn-secondary small" id="btnNarrowToggle" type="button">Check narrow width</button>
+          </div>
+          <div class="preview-pane" id="previewPane"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>SEO fields</h3>
+      <p class="field-hint" style="margin-bottom:1rem;">Suggestions below each field are derived from your article — click "Use this" to fill the field, or ignore them and write your own.</p>
+      <div class="seo-fields-grid">
+        <div>
+          <label for="seoTitle">SEO title</label>
+          <input id="seoTitle" type="text" placeholder="Title tag for search engines">
+          <div class="field-hint">Aim for 50–60 characters.</div>
+          <div class="suggestion-row" id="suggestTitleRow" style="display:none;">
+            <span class="suggestion-label">Suggested</span>
+            <span class="suggestion-text" id="suggestTitleText"></span>
+            <button class="btn-secondary small" id="btnApplyTitle" type="button">Use this</button>
+          </div>
+        </div>
+        <div>
+          <label for="seoMeta">Meta description</label>
+          <textarea id="seoMeta" rows="2" placeholder="120–158 characters, written to earn the click"></textarea>
+          <div class="field-hint">Aim for 120–158 characters.</div>
+          <div class="suggestion-row" id="suggestMetaRow" style="display:none;">
+            <span class="suggestion-label">Suggested</span>
+            <span class="suggestion-text" id="suggestMetaText"></span>
+            <button class="btn-secondary small" id="btnApplyMeta" type="button">Use this</button>
+          </div>
+        </div>
+        <div>
+          <label for="seoSlug">Slug</label>
+          <input id="seoSlug" type="text" placeholder="url-friendly-slug">
+          <div class="field-hint">Lowercase, hyphenated, no stop words.</div>
+          <div class="suggestion-row" id="suggestSlugRow" style="display:none;">
+            <span class="suggestion-label">Suggested</span>
+            <span class="suggestion-text" id="suggestSlugText"></span>
+            <button class="btn-secondary small" id="btnApplySlug" type="button">Use this</button>
+          </div>
+        </div>
+        <div>
+          <label for="seoKeyword">Focus keyword</label>
+          <input id="seoKeyword" type="text" placeholder="main keyword to check density and placement">
+          <div class="field-hint">Used by the SEO checks in the Problems tab — no suggestion for this one, it needs your judgment.</div>
+        </div>
+        <div>
+          <label for="seoExcerpt">Excerpt</label>
+          <textarea id="seoExcerpt" rows="2" placeholder="Short summary for archive pages, RSS, or social shares"></textarea>
+          <div class="field-hint">Optional — not checked in Problems, just handy to have ready.</div>
+          <div class="suggestion-row" id="suggestExcerptRow" style="display:none;">
+            <span class="suggestion-label">Suggested</span>
+            <span class="suggestion-text" id="suggestExcerptText"></span>
+            <button class="btn-secondary small" id="btnApplyExcerpt" type="button">Use this</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS / PROBLEMS TAB -->
+  <div class="tab-panel" id="tab-analysis" style="display:none;">
+    <div class="card score-card">
+      <div class="readiness-banner" id="readinessBanner" style="display:none;"></div>
+      <div class="score-row">
+        <div class="score-number-wrap">
+          <div class="score-number" id="scoreNumber">—</div>
+          <div class="score-label" id="scoreLabel"></div>
+        </div>
+        <div class="score-breakdown" id="scoreBreakdown"></div>
+      </div>
+    </div>
+
+    <div class="card"><h3>Document stats</h3><div id="statsGrid" class="stats-grid"></div></div>
+
+    <div class="card">
+      <h3>Problems</h3>
+      <div id="problemsPanel"></div>
+    </div>
+  </div>
+
+  <!-- EXPORT TAB -->
+  <div class="tab-panel" id="tab-export" style="display:none;">
+    <div class="card">
+      <h3>Table of contents</h3>
+      <div id="tocPreview"></div>
+    </div>
+
+    <div class="card">
+      <h3>Export</h3>
+      <div class="export-grid">
+        <button class="btn-secondary export-btn" data-format="markdown" type="button">Copy Markdown</button>
+        <button class="btn-secondary export-btn" data-format="html" type="button">Copy HTML</button>
+        <button class="btn-secondary export-btn" data-format="gutenberg" type="button">Copy Gutenberg blocks</button>
+        <button class="btn-secondary export-btn" data-format="plaintext" type="button">Copy plain text</button>
+        <button class="btn-secondary" id="btnDownloadMd" type="button">Download .md</button>
+        <button class="btn-secondary" id="btnDownloadHtml" type="button">Download .html</button>
+        <span class="copy-feedback" id="copyFeedback"></span>
+      </div>
+      <pre class="export-preview" id="exportPreview">Pick a format above to preview and copy it.</pre>
+    </div>
+
+    <div class="card">
+      <h3>FAQ builder</h3>
+      <div id="faqList"></div>
+      <button class="btn-secondary small" id="btnAddFaq" type="button">+ Add question</button>
+
+      <div class="subsection">
+        <label class="field-label" for="faqFormat">Output format</label>
+        <select id="faqFormat">
+          <option value="generic">Generic blocks (Heading + Paragraph — always works)</option>
+          <option value="plainlist">Plain Q&amp;A list (paste into your plugin's FAQ block)</option>
+          <option value="jsonld">JSON-LD FAQPage (Custom HTML block)</option>
+        </select>
+      </div>
+
+      <div class="export-grid subsection">
+        <button class="btn-secondary" id="btnCopyFaq" type="button">Copy FAQ output</button>
+      </div>
+      <pre class="export-preview" id="faqPreview">Add at least one question to see output here.</pre>
+    </div>
+
+    <div class="card">
+      <h3>Structured data (JSON-LD)</h3>
+      <p class="plugin-note">Most SEO plugins (Yoast, RankMath, etc.) already generate Article and Breadcrumb schema automatically. Check before adding your own — duplicate structured data can hurt more than it helps.</p>
+
+      <div class="seo-fields-grid">
+        <div><label for="articleAuthor">Author name</label><input id="articleAuthor" type="text" placeholder="Andrea Ciccia"></div>
+        <div><label for="articleDate">Published date</label><input id="articleDate" type="date"></div>
+      </div>
+      <button class="btn-secondary small" id="btnGenArticleLd" type="button" style="margin-top:0.75rem;">Copy Article JSON-LD</button>
+
+      <div class="subsection">
+        <label class="field-label" for="breadcrumbPath">Breadcrumb path</label>
+        <input id="breadcrumbPath" type="text" placeholder="Home &gt; Blog &gt; Meta Ads">
+        <div class="field-hint">Entered manually — the tool has no way to know your site's URL structure.</div>
+        <button class="btn-secondary small" id="btnGenBreadcrumbLd" type="button" style="margin-top:0.6rem;">Copy Breadcrumb JSON-LD</button>
+      </div>
+
+      <div class="subsection">
+        <label class="checkbox-label"><input type="checkbox" id="isHowTo"> This article is a step-by-step how-to</label>
+        <div class="field-hint">Built from the first numbered list in your article.</div>
+        <button class="btn-secondary small" id="btnGenHowToLd" type="button" style="margin-top:0.6rem;" disabled>Copy HowTo JSON-LD</button>
+      </div>
+
+      <pre class="export-preview" id="jsonLdPreview" style="margin-top:1rem;">Pick an option above to preview and copy it.</pre>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab-panel" id="tab-settings" style="display:none;">
+    <div class="card">
+      <h3>Editorial standard</h3>
+      <p class="field-hint" style="margin-bottom:1rem;">These thresholds drive every check in the Problems tab. Pick a starting point, then adjust anything below — saved automatically on this device, nowhere else.</p>
+      <div class="preset-grid">
+        <div class="preset-option">
+          <button class="btn-secondary small preset-btn" data-preset="default" type="button">General / Balanced</button>
+          <p class="field-hint">Balanced — general blog and marketing content.</p>
+        </div>
+        <div class="preset-option">
+          <button class="btn-secondary small preset-btn" data-preset="concise" type="button">News / Brief</button>
+          <p class="field-hint">Short sentences, tight SEO — news, quick updates, social posts.</p>
+        </div>
+        <div class="preset-option">
+          <button class="btn-secondary small preset-btn" data-preset="longform" type="button">In-depth / Feature</button>
+          <p class="field-hint">More lenient on length — documentation, deep dives, features.</p>
+        </div>
+        <div class="preset-option">
+          <button class="btn-secondary small preset-btn" data-preset="explainer" type="button">Explainer / Popular Science</button>
+          <p class="field-hint">Very accessible, low reading level — explainers, general-audience pieces.</p>
+        </div>
+      </div>
+      <button class="btn-secondary small" id="btnSuggestPreset" type="button" style="margin-top:0.85rem;">Suggest from my draft</button>
+      <div class="preset-suggestion" id="presetSuggestion" style="display:none;"></div>
+    </div>
+
+    <div class="card">
+      <h3>Readability</h3>
+      <div class="settings-grid">
+        <div><label for="setMaxSentenceWarn">Sentence length — warn above</label><input type="number" id="setMaxSentenceWarn" min="5" max="60" data-key="maxSentenceWarn"><div class="field-hint">words</div></div>
+        <div><label for="setMaxSentenceCritical">Sentence length — critical above</label><input type="number" id="setMaxSentenceCritical" min="5" max="80" data-key="maxSentenceCritical"><div class="field-hint">words</div></div>
+        <div><label for="setMaxParagraphWords">Paragraph length — flag above</label><input type="number" id="setMaxParagraphWords" min="20" max="500" data-key="maxParagraphWords"><div class="field-hint">words (also used by Accessibility)</div></div>
+        <div><label for="setPassiveSuggest">Passive voice — suggestion above</label><input type="number" id="setPassiveSuggest" min="0" max="1" step="0.01" data-key="passiveSuggest"><div class="field-hint">ratio, e.g. 0.10 = 10%</div></div>
+        <div><label for="setPassiveWarn">Passive voice — warning above</label><input type="number" id="setPassiveWarn" min="0" max="1" step="0.01" data-key="passiveWarn"><div class="field-hint">ratio, e.g. 0.25 = 25%</div></div>
+        <div><label for="setTargetReadingGrade">Reading grade level — target</label><input type="number" id="setTargetReadingGrade" min="1" max="20" data-key="targetReadingGrade"><div class="field-hint">Flesch-Kincaid — 7≈accessible, 9≈general, 12+≈technical</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Structure</h3>
+      <div class="settings-grid">
+        <div><label for="setMinHeadingsForToc">Minimum headings to suggest a TOC</label><input type="number" id="setMinHeadingsForToc" min="0" max="20" data-key="minHeadingsForToc"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Editorial policy</h3>
+      <p class="field-hint" style="margin-bottom:1rem;">Requirements for the publication as a whole, independent of writing style — these stay put when you switch presets above.</p>
+      <div class="settings-grid">
+        <div><label for="setMinWordCount">Minimum article length</label><input type="number" id="setMinWordCount" min="0" step="10"><div class="field-hint">words — 0 = no minimum</div></div>
+        <div><label for="setMaxWordCount">Maximum article length</label><input type="number" id="setMaxWordCount" min="0" step="10"><div class="field-hint">words — 0 = no maximum</div></div>
+        <div><label for="setReadyThreshold">Publishing score threshold</label><input type="number" id="setReadyThreshold" min="0" max="100"><div class="field-hint">below this (with zero Critical issues) counts as "not ready yet"</div></div>
+      </div>
+      <div class="subsection">
+        <label class="field-label" for="setRequiredHeadings">Required heading sections</label>
+        <textarea id="setRequiredHeadings" rows="3" placeholder="one per line, e.g.&#10;Sources&#10;Author bio"></textarea>
+        <div class="field-hint">Every article must have at least one heading containing each of these — plain text match, case-insensitive.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>SEO</h3>
+      <p class="field-hint" style="margin-bottom:1rem;">Each range below is the "ideal" band (a pass). Values a bit outside it still warn instead of failing outright — that acceptable margin is built in, not a separate setting.</p>
+      <div class="settings-grid">
+        <div><label for="setTitleIdealMin">SEO title — ideal min</label><input type="number" id="setTitleIdealMin" min="10" max="100" data-key="titleIdealMin"><div class="field-hint">characters</div></div>
+        <div><label for="setTitleIdealMax">SEO title — ideal max</label><input type="number" id="setTitleIdealMax" min="10" max="100" data-key="titleIdealMax"><div class="field-hint">characters</div></div>
+        <div><label for="setMetaIdealMin">Meta description — ideal min</label><input type="number" id="setMetaIdealMin" min="30" max="300" data-key="metaIdealMin"><div class="field-hint">characters</div></div>
+        <div><label for="setMetaIdealMax">Meta description — ideal max</label><input type="number" id="setMetaIdealMax" min="30" max="300" data-key="metaIdealMax"><div class="field-hint">characters</div></div>
+        <div><label for="setKeywordDensityMin">Keyword density — min</label><input type="number" id="setKeywordDensityMin" min="0" max="10" step="0.1" data-key="keywordDensityMin"><div class="field-hint">%</div></div>
+        <div><label for="setKeywordDensityMax">Keyword density — max</label><input type="number" id="setKeywordDensityMax" min="0" max="10" step="0.1" data-key="keywordDensityMax"><div class="field-hint">%</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Custom word lists</h3>
+      <div class="settings-grid" style="grid-template-columns: 1fr 1fr;">
+        <div>
+          <label for="setAvoidPhrases">Words or phrases to avoid</label>
+          <textarea id="setAvoidPhrases" rows="4" placeholder="one per line, e.g.&#10;synergy&#10;Facebook Ads -> Meta Ads"></textarea>
+          <div class="field-hint">Flags every use in Problems. Add <code>-&gt; replacement</code> after a term and it becomes a one-click fix in Auto-Fix too — otherwise it's flagged only, since this check doesn't exist at all until you add something here.</div>
+        </div>
+        <div>
+          <label for="setCustomFillerWords">Extra filler words</label>
+          <textarea id="setCustomFillerWords" rows="4" placeholder="one per line — added to the built-in list"></textarea>
+          <div class="field-hint">Adds to, rather than replaces, the built-in filler-word check.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Checks</h3>
+      <p class="field-hint" style="margin-bottom:1rem;">Turn off anything that doesn't apply to how you write. A disabled check never appears in Problems and doesn't count toward the score — and it stays off if you switch presets, since it's a different kind of choice than the thresholds above.</p>
+      <div id="checksToggleGrid"></div>
+    </div>
+
+    <div class="card">
+      <h3>Import / export profile</h3>
+      <p class="field-hint" style="margin-bottom:1rem;">Everything above — thresholds, enabled checks, word lists, editorial policy — as one file. Share it with your team, or move it to another device; import replaces what you have now.</p>
+      <div class="settings-grid">
+        <div><label for="exportProfileName">Profile name</label><input type="text" id="exportProfileName" placeholder="e.g. Weekly Magazine — Standard 2026"></div>
+      </div>
+      <div class="toolbar" style="margin-top:0.8rem;">
+        <button class="btn-primary small" id="btnExportProfile" type="button">Export profile</button>
+        <button class="btn-secondary small" id="btnImportProfile" type="button">Import profile</button>
+        <input type="file" id="profileFileInput" accept="application/json,.json" style="display:none;">
+        <span class="paste-feedback" id="profileFeedback"></span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn-secondary small" id="btnResetSettings" type="button">Reset to Default</button>
+      <span class="paste-feedback" id="settingsFeedback"></span>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Open source · MIT License · <a href="https://github.com/DonCiccy/housestyle" target="_blank">GitHub</a></p>
+</footer>
+
+<!-- Classic scripts, loaded in dependency order, sharing one global scope.
+     No type="module": ES module imports are blocked by CORS when this file
+     is opened directly from disk (file://) instead of served over http(s). -->
+<script src="js/utils.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/rules/structure.js"></script>
+<script src="js/rules/readability.js"></script>
+<script src="js/rules/formatting.js"></script>
+<script src="js/rules/seo.js"></script>
+<script src="js/rules/accessibility.js"></script>
+<script src="js/rule-engine.js"></script>
+<script src="js/paste-import.js"></script>
+<script src="js/export-formats.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
